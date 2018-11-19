@@ -264,20 +264,33 @@ class InstrumentManager(object):
             s11s.append(self.parse_measure_string(self.measure_code(chan, s11_name)))
             s22s.append(self.parse_measure_string(self.measure_code(chan, s22_name)))
 
+        # gen freq data
+        # TODO: read off PNA
         self._res_freqs = list(numpy.linspace(meas_f1, meas_f2, points))
 
+        # calc baseline
         self._res_baseline = s21s[0]
+
+        # calc normalized attenuation
         self._res_normalized_att = list()
         for s21 in s21s:
             self._res_normalized_att.append([s - b for s, b in zip(s21, self._res_baseline)])
 
+        # calc S11, S22
         self._res_s11 = s11s
         self._res_s22 = s22s
 
+        # calc attenuation error per code
         for data, att in zip(self._res_normalized_att, self.level_codes[params].values()):
             self._res_att_err_per_code.append([d - b - c for d, b, c in zip(data, self._res_baseline, repeat(att, len(data)))])
 
+        # calc attenuation error per freq - ?
+        # how to chose freqs?
+        # interpolate data between setting points or simply connect points?
 
+        # calc phase shift
+
+        # calc ettenuation
 
 # калибровка 1 рез перед измерением
 # sweep->sweep type->linear freq->start 10 MHz
