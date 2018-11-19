@@ -5,10 +5,11 @@ import serial
 
 from os.path import isfile
 from functools import reduce
+
 from instr.agilente8362b import AgilentE8362B
 from instr.agilente8362bmock import AgilentE8362BMock
-from arduino.arduinostm32 import ArduinoSTM32
-from arduino.arduinostm32mock import ArduinoSTM32Mock
+from arduino.arduinoparallel import ArduinoParallel
+from arduino.arduinoparallelmock import ArduinoParallelMock
 
 # MOCK
 mock_enabled = True
@@ -59,13 +60,24 @@ class InstrumentManager(object):
         print('instrument manager: init')
 
         self._analyzer: AgilentE8362BMock = None
-        self._progr: ArduinoSTM32Mock = None
+        self._progr: ArduinoParallelMock = None
 
         self._samplePresent = False
 
         self._measure_data = list()
 
         self.analyzers = ['E8362B']
+
+        self._res_freqs = list()
+        self._res_baseline = list()
+        self._res_normalized_att = list()
+        self._res_s11 = list()
+        self._res_s22 = list()
+
+        self._res_att_err_per_freq = list()
+        self._res_att_err_per_code = list()
+        self._res_phase_shift = list()
+        self._res_att = list()
 
     def findInstruments(self):
         print('instrument manager: find instruments')
