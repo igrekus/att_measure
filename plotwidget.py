@@ -11,35 +11,70 @@ class PlotWidget(QGridLayout):
     def __init__(self, parent=None, instrumentManager=None):
         QGridLayout.__init__(self)
 
-        self.figures = [
-            [Figure()] * 4,
-            [Figure()] * 4,
-        ]
+        self.fig11 = Figure()
+        self.fig12 = Figure()
+        self.fig13 = Figure()
+        self.fig14 = Figure()
+        self.fig21 = Figure()
+        self.fig22 = Figure()
+        self.fig23 = Figure()
+        self.fig24 = Figure()
 
-        for row, figs in enumerate(self.figures):
-            for col, fig in enumerate(figs):
-                self.addWidget(FigureCanvas(fig), row, col)
+        self.addWidget(FigureCanvas(self.fig11), 0, 1)
+        self.addWidget(FigureCanvas(self.fig12), 0, 2)
+        self.addWidget(FigureCanvas(self.fig13), 0, 3)
+        self.addWidget(FigureCanvas(self.fig14), 0, 4)
+        self.addWidget(FigureCanvas(self.fig21), 1, 1)
+        self.addWidget(FigureCanvas(self.fig22), 1, 2)
+        self.addWidget(FigureCanvas(self.fig23), 1, 3)
+        self.addWidget(FigureCanvas(self.fig24), 1, 4)
 
         # toolbar = NavToolbar(canvas, parent=parent)
 
         self._instrumentManager = instrumentManager
 
-        for figs in self.figures:
-            for fig in figs:
-                fig.gca().plot([1, 2, 3], [1, 2, 3])
+    def plot(self, fig, xs, ys):
+        fig.clear()
+        for x, y in zip(xs, ys):
+            fig.gca().plot(x, y)
+        fig.canvas.draw()
 
-    @pyqtSlot(name='updatePlot')
+    def plot_baseline(self):
+        self.plot(self.fig11,
+                  [self._instrumentManager._res_freqs] * 1,
+                  [self._instrumentManager._res_baseline])
+
+    def plot_normalized_att(self):
+        self.plot(self.fig21,
+                  [self._instrumentManager._res_freqs] * 8,
+                  self._instrumentManager._res_normalized_att)
+
+    def plot_s11(self):
+        self.plot(self.fig12,
+                  [self._instrumentManager._res_freqs] * 8,
+                  self._instrumentManager._res_s11)
+
+    def plot_s22(self):
+        self.plot(self.fig22,
+                  [self._instrumentManager._res_freqs] * 8,
+                  self._instrumentManager._res_s22)
+
+    def plot_err_per_code(self):
+        self.plot(self.fig23,
+                  [self._instrumentManager._res_freqs] * 8,
+                  self._instrumentManager._res_att_err_per_code)
+
+    @pyqtSlot()
     def updatePlot(self):
         print('update plot')
-        freqs = list()
-        amps = list()
-        for freq, amp in self._instrumentManager._measure_data:
-            freqs.append(freq)
-            amps.append(amp)
 
-        self.figure.clear()
-        self.figure.gca().plot(freqs, amps)
-        self.figure.canvas.draw()
+        self.plot_baseline()
+        self.plot_normalized_att()
+        self.plot_s11()
+        self.plot_s22()
 
-
+        try:
+            self.plot_err_per_code()
+        except Exception as ex:
+            print(ex)
 
