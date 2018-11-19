@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         pass
 
         self.measurementFinished.connect(self._measureModel.updateModel)
-        # self.measurementFinished.connect(self._plotWidget.updatePlot)
+        self.measurementFinished.connect(self._plotWidget.updatePlot)
 
     def initDialog(self):
         self.setupUiSignals()
