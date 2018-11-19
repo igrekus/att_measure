@@ -1,5 +1,7 @@
 import time
+from itertools import repeat
 
+import numpy
 import visa
 import serial
 
@@ -184,32 +186,64 @@ class InstrumentManager(object):
 
         return self._samplePresent
 
+    def clear_data(self):
+        self._res_freqs.clear()
+        self._res_baseline.clear()
+        self._res_normalized_att.clear()
+        self._res_s11.clear()
+        self._res_s22.clear()
+
+        self._res_att_err_per_freq.clear()
+        self._res_att_err_per_code.clear()
+        self._res_phase_shift.clear()
+        self._res_att.clear()
+
     def measure(self, params):
         print(f'instrument manager: start measure {params}')
+
+        self.clear_data()
 
         self.measureTask(params)
 
         print('instrument manager: end measure')
+
+    def measure_code(self, chan, name):
+        print('measure param', name)
+        self._analyzer.send(f'CALCulate{chan}:PARameter:SELect "{name}"')
+        self._analyzer.send(f'FORMat ASCII')
+        return self._analyzer.query(f'CALCulate{chan}:DATA? FDATA')
+
+    def parse_measure_string(self, string: str):
+        return [float(point) for point in string.split(',')]
 
     def measureTask(self, params):
         print(f'measurement task run {params}')
 
         chan = 1
         port = 1
-        meas_pow = -5
-        meas_f1 = 10_000_000
-        meas_f2 = 8_000_000_000
-        points = 1601
+        s21_name = 'meas_s21'
+        s11_name = 'meas_s11'
+        s22_name = 'meas_s22'
+
+        meas_pow = self.measure_params[params]['pow']
+        meas_f1 = self.measure_params[params]['f1']
+        meas_f2 = self.measure_params[params]['f2']
+        points = self.measure_params[params]['points']
+
+        if mock_enabled:
+            points = 10
 
         # self._analyzer.send(f'SYSTem:FPRESet')
 
-        self._analyzer.send(f'CALCulate{chan}:PARameter:DEFine:EXT "meas_s21",S21')
-        # self._analyzer.send(f'DISPlay:WINDow1:STATe ON')
+        self._analyzer.send(f'CALCulate{chan}:PARameter:DEFine:EXT "{s21_name}",S21')
+        self._analyzer.send(f'CALCulate{chan}:PARameter:DEFine:EXT "{s11_name}",S11')
+        self._analyzer.send(f'CALCulate{chan}:PARameter:DEFine:EXT "{s22_name}",S22')
         self._analyzer.send(f'DISPlay:WINDow1:TRACe1:DELete')
-        self._analyzer.send(f'DISPlay:WINDow1:TRACe1:FEED "meas_s21"')
+        self._analyzer.send(f'DISPlay:WINDow1:TRACe1:FEED "{s21_name}"')
+        self._analyzer.send(f'DISPlay:WINDow1:TRACe2:FEED "{s11_name}"')
+        self._analyzer.send(f'DISPlay:WINDow1:TRACe3:FEED "{s22_name}"')
 
         self._analyzer.query(f'INITiate{chan}:CONTinuous ON;*OPC?')
-        # self._analyzer.send(f'SENSe{chan}:SWEep:TRIGger:POINt OFF')
 
         self._analyzer.send(f'SOURce{chan}:POWer{port} {meas_pow} dbm')
         self._analyzer.send(f'SENSe{chan}:FOM:RANGe1:SWEep:TYPE linear')
@@ -217,17 +251,33 @@ class InstrumentManager(object):
         self._analyzer.send(f'SENSe{chan}:FREQuency:STARt {meas_f1}')
         self._analyzer.send(f'SENSe{chan}:FREQuency:STOP {meas_f2}')
 
-        # self._analyzer.query(f'INITiate{chan};*OPC?')
-        self._analyzer.send(f'TRIG:SCOP CURRENT')
+        s21s = list()
+        s11s = list()
+        s22s = list()
 
-        self._analyzer.send(f'CALCulate{chan}:PARameter:SELect "meas_s21"')
-        self._analyzer.send(f'FORMat ASCII')
+        for label, code in self.level_codes[params].items():
+            self._progr.set_lpf_code(code)
 
-        res = self._analyzer.query(f'CALCulate{chan}:DATA? FDATA')
+            self._analyzer.send(f'TRIG:SCOP CURRENT')
 
-        print(res)
+            s21s.append(self.parse_measure_string(self.measure_code(chan, s21_name)))
+            s11s.append(self.parse_measure_string(self.measure_code(chan, s11_name)))
+            s22s.append(self.parse_measure_string(self.measure_code(chan, s22_name)))
 
-# https://stackoverflow.com/questions/24214643/python-to-automatically-select-serial-ports-for-arduino
+        self._res_freqs = list(numpy.linspace(meas_f1, meas_f2, points))
+
+        self._res_baseline = s21s[0]
+        self._res_normalized_att = list()
+        for s21 in s21s:
+            self._res_normalized_att.append([s - b for s, b in zip(s21, self._res_baseline)])
+
+        self._res_s11 = s11s
+        self._res_s22 = s22s
+
+        for data, att in zip(self._res_normalized_att, self.level_codes[params].values()):
+            self._res_att_err_per_code.append([d - b - c for d, b, c in zip(data, self._res_baseline, repeat(att, len(data)))])
+
+
 
 # калибровка 1 рез перед измерением
 # sweep->sweep type->linear freq->start 10 MHz
