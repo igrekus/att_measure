@@ -159,6 +159,12 @@ class InstrumentManager(object):
         # TODO implement sample check
 
         chan = 1
+        points = 51
+        self._progr.set_lpf_code(0b100000)
+
+        if not mock_enabled:
+            time.sleep(1)
+
         self._analyzer.send(f'SYSTem:FPRESet')
         self._analyzer.send(f"CALCulate{chan}:PARameter:DEFine:EXT 'check_s21',S21")
         self._analyzer.send(f'DISPlay:WINDow1:STATe ON')
@@ -169,7 +175,7 @@ class InstrumentManager(object):
 
         self._analyzer.send(f'SOURce{chan}:POWer1 -5dbm')
         self._analyzer.send(f'SENSe{chan}:FOM:RANGe1:SWEep:TYPE linear')
-        self._analyzer.send(f'SENSe{chan}:SWEep:POINts 51')
+        self._analyzer.send(f'SENSe{chan}:SWEep:POINts {points}')
         self._analyzer.send(f'SENSe{chan}:FREQuency:STARt 10MHz')
         self._analyzer.send(f'SENSe{chan}:FREQuency:STOP 8GHz')
 
@@ -180,11 +186,13 @@ class InstrumentManager(object):
 
         res = self._analyzer.query(f'CALCulate{chan}:DATA? FDATA')
 
-        avg = reduce(lambda a, b: a + b, [float(val) for val in res.split(',')], 0) / 51
+        avg = reduce(lambda a, b: a + b, map(float, res.split(',')), 0) / points
 
         print(f'>>> avg level: {avg}')
 
         if avg > -15:
+        # if avg > -40:
+        # if avg > -90:
             self._samplePresent = True
         else:
             self._samplePresent = False
@@ -262,6 +270,9 @@ class InstrumentManager(object):
 
         for label, code in self.level_codes[params].items():
             self._progr.set_lpf_code(code)
+
+            if not mock_enabled:
+                time.sleep(1)
 
             self._analyzer.send(f'TRIG:SCOP CURRENT')
 
