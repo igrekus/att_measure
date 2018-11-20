@@ -306,7 +306,8 @@ class InstrumentManager(object):
 
         # calc phase shift
 
-        # calc ettenuation
+        # calc attenuation
+        self._res_att = s21s
 
 # калибровка 1 рез перед измерением
 # sweep->sweep type->linear freq->start 10 MHz
