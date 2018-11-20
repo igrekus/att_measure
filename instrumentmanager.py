@@ -115,16 +115,19 @@ class InstrumentManager(object):
 
             try:
                 for port in find_com_ports():
-                    s = serial.Serial(port=port, baudrate=115200, parity=serial.PARITY_NONE,
+                    s = serial.Serial(port=port, baudrate=9600, parity=serial.PARITY_NONE,
                                       bytesize=8, stopbits=serial.STOPBITS_ONE, timeout=1)
                     if s.is_open:
-                        s.write(b'#NAME\n')
+                        # s.write(b'LPF,1')
+                        s.write(bytes([0x23, 0x4E, 0x41, 0x4D, 0x45]))
+                        # time.sleep(0.5)
                         while s.in_waiting == 0:
                             pass
-                        ans = s.read_all().strip()
+                        ans = s.read_all()
                         s.close()
+                        # if b'LPF is ' in ans:
                         if b'ARDUINO' in ans:
-                            self._progr = ArduinoParallel(port=port, baudrate=115200, parity=serial.PARITY_NONE,
+                            self._progr = ArduinoParallel(port=port, baudrate=9600, parity=serial.PARITY_NONE,
                                                           bytesize=8, stopbits=serial.STOPBITS_ONE, timeout=1)
                             break
                 else:
@@ -135,13 +138,15 @@ class InstrumentManager(object):
 
         def find_mocks():
             self._analyzer = AgilentE8362BMock(idn='Agilent,E8362B mock,sn,firmware')
-            self._progr = ArduinoParallelMock(port='COM4', baudrate=115200, parity=serial.PARITY_NONE, bytesize=8,
+            self._progr = ArduinoParallelMock(port='COM4', baudrate=9600, parity=serial.PARITY_NONE, bytesize=8,
                                               stopbits=serial.STOPBITS_ONE, timeout=1)
 
         if mock_enabled:
             find_mocks()
         else:
             find_live()
+            # self._progr = ArduinoParallelMock(port='COM4', baudrate=115200, parity=serial.PARITY_NONE, bytesize=8,
+            #                                   stopbits=serial.STOPBITS_ONE, timeout=1)
 
         return self._analyzer is not None and self._progr is not None
 
