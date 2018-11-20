@@ -64,17 +64,20 @@ class PlotWidget(QGridLayout):
                   [self._instrumentManager._res_freqs] * 8,
                   self._instrumentManager._res_att_err_per_code)
 
+    def plot_attenuation(self):
+        self.plot(self.fig24,
+                  [self._instrumentManager._res_freqs] * 8,
+                  self._instrumentManager._res_att)
+
     @pyqtSlot()
     def updatePlot(self):
         print('update plot')
 
         self.plot_baseline()
         self.plot_normalized_att()
+
         self.plot_s11()
         self.plot_s22()
+        self.plot_err_per_code()
 
-        try:
-            self.plot_err_per_code()
-        except Exception as ex:
-            print(ex)
-
+        self.plot_attenuation()
