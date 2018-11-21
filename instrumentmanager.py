@@ -190,9 +190,9 @@ class InstrumentManager(object):
 
         print(f'>>> avg level: {avg}')
 
-        if avg > -15:
+        # if avg > -15:
         # if avg > -40:
-        # if avg > -90:
+        if avg > -90:
             self._samplePresent = True
         else:
             self._samplePresent = False
@@ -244,7 +244,7 @@ class InstrumentManager(object):
         points = self.measure_params[params]['points']
 
         if mock_enabled:
-            points = 10
+            points = 51
 
         # self._analyzer.send(f'SYSTem:FPRESet')
 
