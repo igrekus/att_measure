@@ -1,7 +1,6 @@
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QGridLayout
 
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavToolbar
 from matplotlib.figure import Figure
 
@@ -33,41 +32,72 @@ class PlotWidget(QGridLayout):
 
         self._instrumentManager = instrumentManager
 
-    def plot(self, fig, xs, ys):
+    def plot(self, fig, xs, ys, title='', xlabel='', ylabel=''):
         fig.clear()
+
+        fig.set_tight_layout(True)
+
+        ax = fig.gca()
+
+        ax.set_title(title)
+        ax.set_xlabel(xlabel, color='r')
+        ax.set_ylabel(ylabel, color='r')
+
+        ax.grid(True, linestyle='--')
+        ax.tick_params(labelsize='small', direction='in', pad=2, grid_alpha=0.5)
+
         for x, y in zip(xs, ys):
-            fig.gca().plot(x, y)
+            ax .plot(x, y)
+
         fig.canvas.draw()
 
     def plot_baseline(self):
         self.plot(self.fig11,
                   [self._instrumentManager._res_freqs] * 1,
-                  [self._instrumentManager._res_baseline])
+                  [self._instrumentManager._res_baseline],
+                  'Вносимые потери',
+                  'F, GHz',
+                  'Ins. loss, dB')
 
     def plot_normalized_att(self):
         self.plot(self.fig21,
                   [self._instrumentManager._res_freqs] * 8,
-                  self._instrumentManager._res_normalized_att)
+                  self._instrumentManager._res_normalized_att,
+                  'Норм. к-т ослабления',
+                  'F, GHz',
+                  'Normalized att., dB')
 
     def plot_s11(self):
         self.plot(self.fig12,
                   [self._instrumentManager._res_freqs] * 8,
-                  self._instrumentManager._res_s11)
+                  self._instrumentManager._res_s11,
+                  'Вх. обратныые потери',
+                  'F, GHz',
+                  'S11, dB')
 
     def plot_s22(self):
         self.plot(self.fig22,
                   [self._instrumentManager._res_freqs] * 8,
-                  self._instrumentManager._res_s22)
+                  self._instrumentManager._res_s22,
+                  'Вых. обратные потери',
+                  'F, GHz',
+                  'S22, dB')
 
     def plot_err_per_code(self):
         self.plot(self.fig23,
                   [self._instrumentManager._res_freqs] * 8,
-                  self._instrumentManager._res_att_err_per_code)
+                  self._instrumentManager._res_att_err_per_code,
+                  'Ошибка для состояния',
+                  'F, GHz',
+                  'Bit error')
 
     def plot_attenuation(self):
         self.plot(self.fig24,
                   [self._instrumentManager._res_freqs] * 8,
-                  self._instrumentManager._res_att)
+                  self._instrumentManager._res_att,
+                  'К-т ослабления, все',
+                  'Lossб dB',
+                  'F, GHz')
 
     @pyqtSlot()
     def updatePlot(self):
