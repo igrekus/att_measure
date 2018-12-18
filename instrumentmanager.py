@@ -270,7 +270,8 @@ class InstrumentManager(object):
         s11s = list()
         s22s = list()
 
-        for label, code in reversed(list(self.level_codes[params].items())):
+        for label, code in list(self.level_codes[params].items()):
+            print(f'setting value={label} code={code}')
             self._progr.set_lpf_code(code)
 
             if not mock_enabled:
