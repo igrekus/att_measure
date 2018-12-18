@@ -15,7 +15,9 @@ from arduino.arduinoparallelmock import ArduinoParallelMock
 
 # MOCK
 mock_enabled = True
-
+# TODO 1,2,6,7 separate tab
+# TODO graph 8 -- all 64 codes
+# TODO 5,8 -- second tab
 
 class InstrumentManager(object):
 
