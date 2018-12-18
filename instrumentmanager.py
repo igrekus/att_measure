@@ -300,8 +300,8 @@ class InstrumentManager(object):
         self._res_s22 = s22s
 
         # calc attenuation error per code
-        for data, att in zip(self._res_normalized_att, self.level_codes[params].values()):
-            self._res_att_err_per_code.append([d - b - c for d, b, c in zip(data, self._res_baseline, repeat(att, len(data)))])
+        for data, att in zip(self._res_normalized_att, self.level_codes[params].keys()):
+            self._res_att_err_per_code.append([d + c for d, c in zip(data, repeat(att, len(data)))])
 
         # calc attenuation error per freq - ?
         # how to chose freqs?
